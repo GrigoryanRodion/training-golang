@@ -9,13 +9,12 @@ import (
 )
 
 var board [52][52]int		// Створення поля 
-var rowArround, colArround []int		// Масиви рядків і стовпців, за допомогою яких будемо рахувати кількість сусідів
+var rowArround = []int{-1,  0,  1, -1, 1, -1, 0, 1}		
+var colArround = []int{-1, -1, -1,  0, 0,  1, 1, 1}		// Сусдні клітинки бомби по стовпцям (colArround) та рядкам (rowArround)
+
 var numberNeighbors int		// Змінна, яка буде зберігати к-ть сусідів відносно клітинки
 
 func fillingBoard(livingCellsAtStart int) {		// Заповнює поле на початку гри
-	rowArround = []int{-1,  0,  1, -1, 1, -1, 0, 1}		
-	colArround = []int{-1, -1, -1,  0, 0,  1, 1, 1}		// Сусдні клітинки бомби по стовпцям (colArround) та рядкам (rowArround)
-
 	for i := 0; i < len(board); i++ {		// Створює межі поля (крайні індекси масиву)
 		board[0][i] = -1
 		board[i][0] = -1
@@ -70,7 +69,7 @@ func game() {		// Запуск гри
 
 	for {
 		showBoard()
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(400 * time.Millisecond)
 		
 		for i := 1; i < len(board) - 1; i++ {		// Перевіряємо кожену клітинку і вирішуємо (checkRule(i, j)) - виживе вона, чи ні
 			for j := 1; j < len(board) - 1; j++ {

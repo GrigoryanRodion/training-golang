@@ -8,49 +8,49 @@ import (
 	"strconv"
 )
 
-var board [11][11]int		// Створення поля 
-var usedCellsBoard [11][11]bool		// Створення булевого поля, для 
-var rowArround, colArround []int		// Масиви рядків і стовпців, за допомогою яких будемо рахувати кількість сусідів
-var opennedCells int		// Загальна кількість відкритих комірок у полі. Якщо ігорьок відкриє всі клітини, крім бімб, то він виграє
+var board [11][11]int            // Створення поля
+var usedCellsBoard [11][11]bool  // Створення булевого поля, для
+var rowArround, colArround []int // Масиви рядків і стовпців, за допомогою яких будемо рахувати кількість сусідів
+var opennedCells int             // Загальна кількість відкритих комірок у полі. Якщо ігорьок відкриє всі клітини, крім бімб, то він виграє
 
-func fillingBoard(numberMines int) {		// Заповнюємо рандомно поле	 
-	rowArround = []int{-1,  0,  1, -1, 1, -1, 0, 1}		
-	colArround = []int{-1, -1, -1,  0, 0,  1, 1, 1}		// Сусдні клітинки бомби по стовпцям (colArround) та рядкам (rowArround)
+func fillingBoard(numberMines int) { // Заповнюємо рандомно поле
+	rowArround = []int{-1, 0, 1, -1, 1, -1, 0, 1}
+	colArround = []int{-1, -1, -1, 0, 0, 1, 1, 1} // Сусдні клітинки бомби по стовпцям (colArround) та рядкам (rowArround)
 
-	for i := 0; i < len(board); i++ {		// Заповнюємо края поля [-1], щоб потім ідентифікувати їх
+	for i := 0; i < len(board); i++ { // Заповнюємо края поля [-1], щоб потім ідентифікувати їх
 		board[i][0] = -1
 		board[0][i] = -1
 		board[i][10] = -1
 		board[10][i] = -1
 	}
 
-	for i, x, y := 0, 0, 0; i < numberMines; {		// Створюємо у полі міни (9) у випадковому подрядку 
-		x, y = 1 + rand.Intn(9), 1 + rand.Intn(9)
+	for i, x, y := 0, 0, 0; i < numberMines; { // Створюємо у полі міни (9) у випадковому подрядку
+		x, y = 1+rand.Intn(9), 1+rand.Intn(9)
 
-		if board[x][y] != 9 {		// Якщо поле в цій клітинці не має міни (0), то створюємо її; 
-			board[x][y] = 9			// інакше, якщо міна вже є, цикл не виконається. Це необхідня для заповнення поле мінаму у РІЗНИХ клітинках
+		if board[x][y] != 9 { // Якщо поле в цій клітинці не має міни (0), то створюємо її;
+			board[x][y] = 9 // інакше, якщо міна вже є, цикл не виконається. Це необхідня для заповнення поле мінаму у РІЗНИХ клітинках
 			i++
 
-			for j := 0; j < 8; j++ {		
-				if board[x + rowArround[j]][y + colArround[j]] != 9 && board[x + rowArround[j]][y + colArround[j]] != -1{		// Перебирає усіх сусів бомби, і збільшує їх значення на 1-цю 
-					board[x + rowArround[j]][y + colArround[j]]++
+			for j := 0; j < 8; j++ {
+				if board[x+rowArround[j]][y+colArround[j]] != 9 && board[x+rowArround[j]][y+colArround[j]] != -1 { // Перебирає усіх сусів бомби, і збільшує їх значення на 1-цю
+					board[x+rowArround[j]][y+colArround[j]]++
 				}
 			}
 		}
 	}
 }
 
-func showBoard() {			// Створюємо поле для ігорька
+func showBoard() { // Створюємо поле для ігорька
 	fmt.Print("\033[H\033[2J")
-	fmt.Println("   1 2 3 4 5 6 7 8 9\n   _________________")		// Горизонтальне поле 1 - 9, для зручнішої орієнтації
+	fmt.Println("   1 2 3 4 5 6 7 8 9\n   _________________") // Горизонтальне поле 1 - 9, для зручнішої орієнтації
 
-	for i := 1; i < len(usedCellsBoard) - 1; i++ {
-		fmt.Printf("%v |", i)		// Вертикальне поле 1 - 9, для зручнішої орієнтації
+	for i := 1; i < len(usedCellsBoard)-1; i++ {
+		fmt.Printf("%v |", i) // Вертикальне поле 1 - 9, для зручнішої орієнтації
 
-		for j := 1; j < len(usedCellsBoard) - 1; j++ {
-			if usedCellsBoard[i][j] == false {
+		for j := 1; j < len(usedCellsBoard)-1; j++ {
+			if !usedCellsBoard[i][j] {
 				fmt.Print("- ")
-			} else if usedCellsBoard[i][j] == true {
+			} else {
 				fmt.Printf("%v ", board[i][j])
 			}
 		}
@@ -59,7 +59,7 @@ func showBoard() {			// Створюємо поле для ігорька
 	}
 }
 
-func getColAndRow() (int, int) {		// Отримуємо значення ствопця і рядка від ігорька
+func getColAndRow() (int, int) { // Отримуємо значення ствопця і рядка від ігорька
 	var rowStr, colStr string
 
 	for {
@@ -75,26 +75,26 @@ func getColAndRow() (int, int) {		// Отримуємо значення ств�
 			fmt.Println("\nПомилка при конвертуванні стовпця, і/або рядка в числовий тип! Спробуйте ще раз.\n")
 		} else if rowInt > 9 || rowInt < 1 || colInt > 9 || colInt < 1 {
 			fmt.Println("\nПомилка! Значення стовпця, і/або рядка не має бути меншим за 1-цю, або більшим 9-ти. Спробуйте ще раз.\n")
-		} else {	
-			return rowInt, colInt;
+		} else {
+			return rowInt, colInt
 		}
 	}
 }
 
-func openNeighboringCells(row, col int) {		// Відкриття сусдніх клітинок, якщо поточна клітника 0
+func openNeighboringCells(row, col int) { // Відкриття сусдніх клітинок, якщо поточна клітника 0
 	for i := 0; i < 8; i++ {
-		if board[row + rowArround[i]][col + colArround[i]] > 0 && 9 > board[row + rowArround[i]][col + colArround[i]] && !usedCellsBoard[row + rowArround[i]][col + colArround[i]] {		// Це жах x/
-			usedCellsBoard[row + rowArround[i]][col + colArround[i]] = true
+		if board[row+rowArround[i]][col+colArround[i]] > 0 && 9 > board[row+rowArround[i]][col+colArround[i]] && !usedCellsBoard[row+rowArround[i]][col+colArround[i]] { // Це жах x/
+			usedCellsBoard[row+rowArround[i]][col+colArround[i]] = true
 			opennedCells++
-		} else if board[row + rowArround[i]][col + colArround[i]] == 0 && !usedCellsBoard[row + rowArround[i]][col + colArround[i]] {
-			usedCellsBoard[row + rowArround[i]][col + colArround[i]] = true
+		} else if board[row+rowArround[i]][col+colArround[i]] == 0 && !usedCellsBoard[row+rowArround[i]][col+colArround[i]] {
+			usedCellsBoard[row+rowArround[i]][col+colArround[i]] = true
 			opennedCells++
-			openNeighboringCells(row + rowArround[i], col + colArround[i])
+			openNeighboringCells(row+rowArround[i], col+colArround[i])
 		}
 	}
 }
 
-func game() {		// Правила і логіка гри
+func game() { // Правила і логіка гри
 	showBoard()
 	row, col := getColAndRow()
 
@@ -110,29 +110,27 @@ func game() {		// Правила і логіка гри
 		opennedCells++
 	}
 
-	if opennedCells == 9 * 9 - 10 {
+	if opennedCells == 9*9-10 {
 		fmt.Println("\nВітаємо! Ви виграли!")
 		return
 	}
-	
+
 	game()
 }
 
-
-
-func restartGame() {		// Перезапуск гри за бажанням ігорька
+func restartGame() { // Перезапуск гри за бажанням ігорька
 	var playerAnswer string
 
-	for isContinue := true; isContinue ; {
+	for isContinue := true; isContinue; {
 		fmt.Println("\nХочете спробувати ще раз? (Y/N)")
 		fmt.Scan(&playerAnswer)
 
 		switch playerAnswer {
 		case "Y", "y":
-			for i := 0; i < len(board); i++ {		// Заповняємо поле нулями і usedCellsBoard - false
+			for i := 0; i < len(board); i++ { // Заповняємо поле нулями і usedCellsBoard - false
 				for j := 0; j < len(board); j++ {
 					board[i][j] = 0
-					usedCellsBoard[i][j] = false		
+					usedCellsBoard[i][j] = false
 				}
 			}
 
@@ -158,4 +156,3 @@ func main() {
 	game()
 	restartGame()
 }
-
