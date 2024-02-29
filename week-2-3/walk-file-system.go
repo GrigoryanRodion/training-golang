@@ -1,4 +1,5 @@
-// Обхід файлової системи
+// walk-file-system-version-2.0
+// NO CHEATING IN LIBRARY !!!
 
 package main
 
@@ -6,12 +7,10 @@ import (
 	"bufio"
 	"crypto/md5"
 	"encoding/hex"
-	// "encoding/json"
+	"encoding/json"
 	"fmt"
-	"io/fs"
 	"log"
 	"os"
-	"path/filepath"
 	"strconv"
 	"sync"
 	"time"
@@ -36,14 +35,13 @@ func getUserResponse() string {
 	return scanner.Text()
 }
 
-func isValidDirectory(directory string) {
+func isValidDirectory(directory string) error {
 	err := os.Chdir(directory)
-	if err != nil {
-		log.Fatal("no such directory")
-	}
+
+	return err
 }
 
-func getNumberThreads() uint64 {
+func getNumberGoroutines() uint64 {
 	response := getUserResponse()
 	goroutines, err := strconv.ParseUint(response, 10, 64)
 
@@ -65,20 +63,30 @@ func getMD5Hash(text string) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func walkingDir(directory string) {
-	err := filepath.WalkDir(directory, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
+func walkDir(path string, ch chan string) {
+	defer myHashTable.wg.Done()
 
-		myHashTable.table[path] = getMD5Hash(path)
-
-		return nil
-	})
-
+	entries, err := os.ReadDir(path)
 	if err != nil {
-		log.Fatal(err) // ?error
+		log.Fatal(err)
 	}
+
+	for _, v := range entries {
+		filePath := path + "/" + v.Name()
+		ch <- filePath
+
+		if v.IsDir() {
+			myHashTable.wg.Add(1)
+			walkDir(filePath, ch)
+		}
+	}
+}
+
+func walkFileSystem(path string, ch chan string) {
+	myHashTable.wg.Add(1)
+	walkDir(path, ch)
+	myHashTable.wg.Wait()
+	close(ch)
 }
 
 func showHashTable() {
@@ -90,10 +98,13 @@ func showHashTable() {
 func main() {
 	fmt.Println("Введіть шлях до директорії, на якій необхідно зробити обхід (/home/rodion): ")
 	initialDirectory := getUserResponse()
-	isValidDirectory(initialDirectory)
+	err := isValidDirectory(initialDirectory)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	fmt.Print("Введіть к-ть 'goroutines', які ви хочете використовувати: ")
-	goroutines := getNumberThreads()
+	goroutines := getNumberGoroutines()
 
 	start := time.Now()
 
@@ -102,25 +113,35 @@ func main() {
 		initialDirectory: hash,
 	}
 
-	walkingDir(initialDirectory)
+	ch := make(chan string)
 
-	// showHashTable()
+	go walkFileSystem(initialDirectory, ch)
+
+	for v := range ch {
+		myHashTable.table[v] = getMD5Hash(v)
+	}
+
 	fmt.Println(goroutines)
 
+	showHashTable()
 	elapsed := time.Since(start)
 	log.Printf("%s took", elapsed)
 
 	// Save result in JSON format file
 
-	// fmt.Println("Введіть шлядо до директорії, де вам необхідно зберегти сформовану хеш-таблицю у форматі JSON (/home/rodion): ")
-	// pathJSONfile := getUserResponse()
-	// isValidDirectory(pathJSONfile)
+	fmt.Println("Введіть шлях до директорії, де вам необхідно зберегти сформовану хеш-таблицю у форматі JSON (/home/rodion): ")
+	pathJSONfile := getUserResponse()
 
-	// data, err := json.MarshalIndent(myHashTable.table, "", " ")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	err = isValidDirectory(pathJSONfile)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// os.Chdir(pathJSONfile)
-	// os.WriteFile("Hash-table_JSON", data, 0644)
+	data, err := json.MarshalIndent(myHashTable.table, "", " ")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	os.Chdir(pathJSONfile)
+	os.WriteFile("Hash-table.json", data, 0644)
 }
